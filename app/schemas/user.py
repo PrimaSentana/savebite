@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 class UserCreate(BaseModel):
@@ -10,6 +11,7 @@ class UserResponse(BaseModel):
     email: str
     username: str
     is_active: bool
+    image : str | None = None
     
     class Config:
         from_attributes = True
