@@ -27,6 +27,12 @@ async def get_menu_by_id(db: AsyncSession, menu_id: int):
     )
     return result.scalar_one_or_none()
 
+async def get_menu_by_id_deactive(db: AsyncSession, menu_id: int):
+    result = await db.execute(
+        select(Menu).where(Menu.id == menu_id, Menu.is_active == False)
+    )
+    return result.scalar_one_or_none()
+
 async def create_menu(db: AsyncSession, merchant_id: int, data: MenuCreate):
     discount_pct = calculate_discount_percentage(
         data.original_price,
@@ -70,6 +76,10 @@ async def update_menu(db: AsyncSession, menu: Menu, data: MenuUpdate):
     await db.refresh(menu)
     return menu
 
+async def activated_menu(db: AsyncSession, menu: Menu):
+    menu.is_active = True
+    await db.commit()
+    
 async def deactive_menu(db: AsyncSession, menu: Menu):
     menu.is_active = False
     await db.commit()
