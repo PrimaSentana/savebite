@@ -1,7 +1,7 @@
 from fastapi import FastAPI
+from app.crud import merchants
 from app.database import engine, Base
-from app.models import user
-from app.routers import auth, users
+from app.routers import auth, menu, users, merchants
 
 app = FastAPI()
 
@@ -11,7 +11,9 @@ async def startup():
         await conn.run_sync(Base.metadata.create_all)
         
 app.include_router(auth.router) 
-app.include_router(users.router)       
+app.include_router(users.router)      
+app.include_router(merchants.router) 
+app.include_router(menu.router)
 
 @app.get('/')
 def test():
