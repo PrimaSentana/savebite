@@ -2,14 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import create_access_token, create_refresh_token, verify_token
+from app.crud.merchants import authenticate_merchant, build_merchant_response, create_merchant, get_merchant_by_email
 from app.database import get_db
 from app.models.user import User
+from app.schemas.merchants import MerchantCreate, MerchantLogin, MerchantResponse
 from app.schemas.user import RefreshTokenRequest, TokenResponse, UserLogin, UserResponse, UserCreate
 from app.crud import user as crud_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post("/register", response_model=UserResponse, status_code=201)
+@router.post("/register-user", response_model=UserResponse, status_code=201)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     existing_email = await crud_user.get_user_by_email(db, user_data.email)
     if existing_email:
@@ -28,7 +30,7 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     new_user = await crud_user.create_user(db, user_data)
     return new_user
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login-user", response_model=TokenResponse)
 async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
     user = await crud_user.authenticate_user(db, user_data.email, user_data.password)
     if not user:
@@ -43,8 +45,8 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
             detail="Akun tidak aktif"
         )
 
-    access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    access_token = create_access_token(data={"sub": str(user.id), "role": "user"})
+    refresh_token = create_refresh_token(data={"sub": str(user.id), "role": "user"})
 
     return TokenResponse(
         access_token=access_token,
@@ -80,4 +82,37 @@ async def refresh_token(body: RefreshTokenRequest, db: AsyncSession = Depends(ge
     return TokenResponse(
         access_token = new_access_token,
         refresh_token = new_refresh_token
+    )
+    
+@router.post("/register-merchant", response_model=MerchantResponse, status_code=201)
+async def register_merchant(data: MerchantCreate, db: AsyncSession = Depends(get_db)):
+    # Cek email sudah terdaftar
+    existing = await get_merchant_by_email(db, data.email)
+    if existing:
+        raise HTTPException(status_code=400, detail="Email sudah terdaftar")
+
+    merchant = await create_merchant(db, data)
+    return build_merchant_response(merchant)
+
+@router.post("/login-merchant", response_model=TokenResponse)
+async def login_merchant(data: MerchantLogin, db: AsyncSession = Depends(get_db)):
+    merchant = await authenticate_merchant(db, data.email, data.password)
+    if not merchant:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email atau password salah"
+        )
+
+    if not merchant.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Akun merchant tidak aktif"
+        )
+
+    access_token = create_access_token(data={"sub": str(merchant.id), "role": "merchant"})
+    refresh_token = create_refresh_token(data={"sub": str(merchant.id), "role": "merchant"})
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token
     )
