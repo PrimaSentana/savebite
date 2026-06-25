@@ -4,6 +4,7 @@ from app.core.cloudinary import delete_profile_photo, upload_profile_photo
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserResponse
+from app.crud import user as crud_user
 from app.core.deps import get_current_user
 
 router = APIRouter(prefix="/users", tags=['Users'])
@@ -65,3 +66,13 @@ async def delete_photo(
     await db.refresh(current_user)
     
     return current_user
+
+@router.delete("/me")
+async def delete_my_account(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    if current_user.image:
+        await delete_profile_photo(current_user.id)
+        
+    await crud_user.delete_user(db, current_user)
+    return{
+        "message": "Account permanently deleted"
+    }
