@@ -31,3 +31,7 @@ async def authenticate_user(db: AsyncSession, email: str, password: str):
     if not verify_password(password, user.password):
         return None
     return user
+
+async def delete_user(db:AsyncSession, user: User):
+    await db.delete(user)
+    await db.commit()
