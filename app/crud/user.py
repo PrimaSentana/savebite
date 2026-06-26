@@ -32,6 +32,21 @@ async def authenticate_user(db: AsyncSession, email: str, password: str):
         return None
     return user
 
+async def change_user_email(db: AsyncSession, user: User, new_email: str):
+    user.email = new_email
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+async def change_user_password(db:AsyncSession, user: User, current_password: str, new_password: str):
+    if not verify_password(current_password, user.password):
+        return None
+
+    user.password = hash_password(new_password)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
 async def delete_user(db:AsyncSession, user: User):
     await db.delete(user)
     await db.commit()
