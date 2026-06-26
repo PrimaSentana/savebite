@@ -19,6 +19,12 @@ ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
 MAX_SIZE = 5 * 1024 * 1024  # 5MB
 
 # Get all menu
+@router.get("/all", response_model=List[MenuResponse])
+async def get_all_menu(
+    db: AsyncSession = Depends(get_db)
+):
+    return await crud_menu.get_all_menu(db)
+
 @router.get("/", response_model=List[MenuResponse])
 async def get_my_menus(
     current_merchant: Merchant = Depends(get_current_merchant),
@@ -27,9 +33,8 @@ async def get_my_menus(
     return await crud_menu.get_menus_by_merchant(db, current_merchant.id)
 
 @router.get("/{menu_id}", response_model=MenuResponse)
-async def get_my_menu_by_id(
+async def get_menu_by_id(
     menu_id: int,
-    current_merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db),
 ):
     return await crud_menu.get_menu_by_id(db, menu_id)
