@@ -1,4 +1,3 @@
-# app/crud/menu.py
 import cloudinary
 import cloudinary.uploader
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +18,10 @@ async def get_menus_by_merchant(db: AsyncSession, merchant_id: int):
         .where(Menu.merchant_id == merchant_id, Menu.is_active == True)
         .order_by(Menu.created_at.desc())
     )
+    return result.scalars().all()
+
+async def get_all_menu(db: AsyncSession) -> list[Menu]:
+    result = await db.execute(select(Menu))
     return result.scalars().all()
 
 async def get_menu_by_id(db: AsyncSession, menu_id: int):
