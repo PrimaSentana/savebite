@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -27,3 +27,19 @@ class UserLogin(BaseModel):
     
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+    
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+    
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v):
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password maksimal 72 karakter")
+        if len(v) < 8:
+            raise ValueError("Password minimal 8 karakter")
+        return v
+
+class ChangeEmail(BaseModel):
+    new_email: EmailStr

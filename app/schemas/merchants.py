@@ -10,6 +10,7 @@ class MerchantCreate(BaseModel):
     description: str | None = None
     latitude: float
     longitude: float
+    is_active: bool = True
     
     @field_validator("password")
     @classmethod
@@ -53,4 +54,19 @@ class MerchantUpdate(BaseModel):
     phone: str | None = None
     address: str | None = None
     description: str | None = None
-    is_open: bool | None = None
+    
+class ChangeMerchantPassword(BaseModel):
+    current_password: str
+    new_password: str
+    
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v):
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password max 72 characters")
+        if len(v) < 8:
+            raise ValueError("Password min 8 characters")
+        return v
+
+class ChangeMerchantEmail(BaseModel):
+    new_email: EmailStr
