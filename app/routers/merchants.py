@@ -1,15 +1,13 @@
-# app/routers/merchant_auth.py
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import cloudinary
 from app.core.cloudinary import delete_merchant_banner, delete_merchant_logo, upload_banner_photo_merchant, upload_profile_photo_merchant
 from app.core.deps import get_current_merchant
-from app.crud.merchants import build_merchant_response, delete_merchant, update_merchant
+from app.crud.merchants import build_merchant_response, change_merchant_email, change_merchant_password, delete_merchant, get_merchant_by_email, update_merchant
 from app.database import get_db
 from app.models.merchants import Merchant
-from app.schemas.merchants import MerchantResponceImage, MerchantResponse, MerchantUpdate
+from app.schemas.merchants import ChangeMerchantEmail, ChangeMerchantPassword, MerchantResponceImage, MerchantResponse, MerchantUpdate
 from app.schemas.user import UserResponse
-from app.crud import merchants as crud_merchant
 from app.crud import menu as crud_menu
 
 ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
@@ -37,6 +35,43 @@ async def update_merchant_profile(
 ):
     updated = await update_merchant(db, current_merchant, data)
     return build_merchant_response(updated)
+
+@router.put("/me/email", response_model=MerchantResponse)
+async def update_merchant_email(
+    data: ChangeMerchantEmail,
+    current_merchant: Merchant = Depends(get_current_merchant),
+    db: AsyncSession = Depends(get_db)
+):
+    existing = get_merchant_by_email(db, data.new_email)
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already in use"
+        )
+    
+    merchant = await change_merchant_email(db, data.new_email, current_merchant)
+    return build_merchant_response(merchant)
+
+@router.put("/me/password")
+async def update_merchant_password(
+    data: ChangeMerchantPassword,
+    current_merchant: Merchant= Depends(get_current_merchant),
+    db: AsyncSession = Depends(get_db)
+):
+    merchant = await change_merchant_password(
+        db,
+        current_merchant,
+        data.current_password,
+        data.new_password
+    )
+    if not merchant:
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
+    return {
+        "message": "Password updated successfully"
+    }
 
 @router.post("/me/logo-upload", response_model=MerchantResponse)
 async def upload_photo(

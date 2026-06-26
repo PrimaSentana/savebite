@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.cloudinary import delete_profile_photo, upload_profile_photo
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserResponse
+from app.schemas.user import ChangeEmail, ChangePassword, UserResponse
 from app.crud import user as crud_user
 from app.core.deps import get_current_user
 
@@ -22,6 +22,43 @@ async def get_dashboard(current_user: User = Depends(get_current_user)):
         "message": f"Welcome, {current_user.username}",
         "user_id": current_user.id,
         "email": current_user.email
+    }
+    
+@router.put("/me/email", response_model=ChangeEmail)
+async def update_email(
+    data: ChangeEmail,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    existing = await crud_user.get_user_by_email(db, data.new_email)
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already in use"
+        )
+    
+    user = await crud_user.change_user_email(db, current_user, data.new_email)
+    return user
+    
+@router.put("/me/password")
+async def update_password(
+    data: ChangePassword,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    user = await crud_user.change_user_password(
+        db,
+        current_user,
+        data.current_password,
+        data.new_password
+    )
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
+    return {
+        "message: Password updated successfully"
     }
 
 @router.post("/me/photo", response_model=UserResponse)
