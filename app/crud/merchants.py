@@ -38,6 +38,21 @@ async def authenticate_merchant(db: AsyncSession, email: str, password: str):
         return None
     return merchant
 
+async def change_merchant_email(db:AsyncSession, new_email: str, merchant: Merchant):
+    merchant.email = new_email
+    await db.commit()
+    await db.refresh(merchant)
+    return
+
+async def change_merchant_password(db:AsyncSession, merchant: Merchant, current_password: str, new_password: str):
+    if not verify_password(current_password, merchant.password):
+        return None
+    
+    merchant.password = hash_password(new_password)
+    await db.commit()
+    await db.refresh(merchant)
+    return merchant
+
 async def update_merchant(db: AsyncSession, merchant: Merchant, data: MerchantUpdate):
     for field, value in data.model_dump(exclude_none=True).items():
         setattr(merchant, field, value)
