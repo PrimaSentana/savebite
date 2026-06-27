@@ -1,4 +1,6 @@
 # app/schemas/menu.py
+from csv import Error
+
 from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from datetime import datetime
@@ -43,6 +45,16 @@ class MenuUpdate(BaseModel):
     status: MenuStatus | None = None
     available_from: datetime | None = None
     available_until: datetime | None = None
+    
+class StockUpdate(BaseModel):
+    quantity: int
+    
+    @field_validator("quantity")
+    @classmethod
+    def validate_quantity(cls, v):
+        if v < 0:
+            raise ValueError("Quantity cannot be negative")
+        return v
     
 class MenuResponse(BaseModel):
     id: int

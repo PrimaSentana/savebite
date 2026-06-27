@@ -6,10 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from app.database import get_db
-from app.models.menu import MenuCategory
+from app.models.menu import MenuCategory, MenuStatus
 from app.models.merchants import Merchant
 from app.core.deps import get_current_merchant
-from app.schemas.menu import MenuCreate, MenuUpdate, MenuResponse
+from app.schemas.menu import MenuCreate, MenuUpdate, MenuResponse, StockUpdate
 from app.core.cloudinary import delete_menu_image, upload_menu_image
 from app.crud import menu as crud_menu
 
@@ -109,6 +109,36 @@ async def update_menu(
         raise HTTPException(status_code=403, detail="You don't own this menu")
 
     return await crud_menu.update_menu(db, menu, data)
+
+@router.patch("/{menu_id}/stock", response_model=MenuResponse)
+async def edit_menu_stock(
+    menu_id: int,
+    data: StockUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_merchant: Merchant = Depends(get_current_merchant),
+):
+    menu = await crud_menu.get_menu_by_id(db, menu_id)
+    if not menu:
+        raise HTTPException(
+            status_code=404,
+            detail="Menu not found"
+        )
+    if menu.merchant_id != current_merchant.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You dont own this menu"
+        )
+
+    menu.quantity = data.quantity
+    
+    if menu.quantity == 0:
+        menu.status = MenuStatus.SOLD_OUT
+    elif menu.quantity == MenuStatus.SOLD_OUT and data.quantity:
+        menu.status = MenuStatus.ON_SALE
+        
+    await db.commit()
+    await db.refresh(menu)
+    return menu
 
 # Upload menu image
 @router.post("/{menu_id}/image", response_model=MenuResponse)
