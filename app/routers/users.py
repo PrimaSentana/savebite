@@ -61,17 +61,31 @@ async def update_password(
         "message: Password updated successfully"
     }
 
+@router.post("/me/photo-test")
+async def upload_photo(
+    file: UploadFile = File(...),
+):
+    mime = file.content_type
+    print(mime)
+    
+    return {
+        "filename": file.filename,
+        "file_type": mime
+    }
+
 @router.post("/me/photo", response_model=UserResponse)
 async def upload_photo(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(
-            status_code = 400,
-            detail="Format file tidak didukung. Gunakan JPG, PNG, atau WEBP"
-        )
+    # mime = file.content_type
+    # print(mime)
+    # if file.content_type not in ALLOWED_TYPES:
+    #     raise HTTPException(
+    #         status_code = 400,
+    #         detail="Format file tidak didukung. Gunakan JPG, PNG, atau WEBP"
+    #     )
     
     file_bytes = await file.read()
     if len(file_bytes) > MAX_SIZE:

@@ -79,11 +79,11 @@ async def upload_photo(
     current_merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db)
 ):
-    if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(
-            status_code = 400,
-            detail="Format file tidak didukung. Gunakan JPG, PNG, atau WEBP"
-        )
+    # if file.content_type not in ALLOWED_TYPES:
+    #     raise HTTPException(
+    #         status_code = 400,
+    #         detail="Format file tidak didukung. Gunakan JPG, PNG, atau WEBP"
+    #     )
     
     file_bytes = await file.read()
     if len(file_bytes) > MAX_SIZE:
@@ -106,11 +106,11 @@ async def upload_photo(
     current_merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db)
 ):
-    if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(
-            status_code = 400,
-            detail="Format file tidak didukung. Gunakan JPG, PNG, atau WEBP"
-        )
+    # if file.content_type not in ALLOWED_TYPES:
+    #     raise HTTPException(
+    #         status_code = 400,
+    #         detail="Format file tidak didukung. Gunakan JPG, PNG, atau WEBP"
+    #     )
     
     file_bytes = await file.read()
     if len(file_bytes) > MAX_SIZE:
