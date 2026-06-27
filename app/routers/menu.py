@@ -78,11 +78,11 @@ async def create_menu(
     menu = await crud_menu.create_menu(db, current_merchant.id, data)
     
     if image is not None:
-        if image.content_type not in ALLOWED_TYPES:
-            raise HTTPException(
-                status_code=400,
-                detail="File format not supported. Use JPG, PNG, or WEBP"
-            )
+        # if image.content_type not in ALLOWED_TYPES:
+        #     raise HTTPException(
+        #         status_code=400,
+        #         detail="File format not supported. Use JPG, PNG, or WEBP"
+        #     )
         file_bytes = await image.read()
         if len(file_bytes) > MAX_SIZE:
             raise HTTPException(status_code=400, detail="File size max 5MB")
@@ -123,8 +123,8 @@ async def upload_image(
         raise HTTPException(status_code=404, detail="Menu not found")
     if menu.merchant_id != current_merchant.id:
         raise HTTPException(status_code=403, detail="You don't own this menu")
-    if file.content_type not in ALLOWED_TYPES:
-        raise HTTPException(status_code=400, detail="File format not supported")
+    # if file.content_type not in ALLOWED_TYPES:
+    #     raise HTTPException(status_code=400, detail="File format not supported")
 
     file_bytes = await file.read()
     if len(file_bytes) > MAX_SIZE:
