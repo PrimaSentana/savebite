@@ -1,6 +1,7 @@
 # app/schemas/menu.py
 from csv import Error
 
+from fastapi import HTTPException
 from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from datetime import datetime
@@ -77,3 +78,15 @@ class MenuResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        
+class BulkDeleteMenu(BaseModel):
+    menu_ids: list[int]
+    
+    @field_validator("menu_ids")
+    @classmethod
+    def validate_menu_ids(cls, v):
+        if len(v) == 0:
+            raise ValueError("menu_ids cannot be empty")
+        if len(v) > 50:
+            raise ValueError("Cannot delete more than 50 menus at once")
+        return v

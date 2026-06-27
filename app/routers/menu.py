@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.menu import MenuCategory, MenuStatus
 from app.models.merchants import Merchant
 from app.core.deps import get_current_merchant
-from app.schemas.menu import MenuCreate, MenuUpdate, MenuResponse, StockUpdate
+from app.schemas.menu import BulkDeleteMenu, MenuCreate, MenuUpdate, MenuResponse, StockUpdate
 from app.core.cloudinary import delete_menu_image, upload_menu_image
 from app.crud import menu as crud_menu
 
@@ -104,7 +104,6 @@ async def update_menu(
     if not menu:
         raise HTTPException(status_code=404, detail="Menu not found")
 
-    # Pastikan menu milik merchant yang login
     if menu.merchant_id != current_merchant.id:
         raise HTTPException(status_code=403, detail="You don't own this menu")
 
@@ -130,6 +129,7 @@ async def edit_menu_stock(
         )
 
     menu.quantity = data.quantity
+    menu.max_order_per_user = data.quantity
     
     if menu.quantity == 0:
         menu.status = MenuStatus.SOLD_OUT
@@ -204,6 +204,30 @@ async def deactivate_menu(
         "message": "Menu deleted successfully"
     }
 
+#bulk delete
+@router.delete("/bulk-delete")
+async def bulk_delete_menu(
+    data: BulkDeleteMenu,
+    db: AsyncSession = Depends(get_db),
+    current_merchant: Merchant = Depends(get_current_merchant),
+):
+    deleted_count = await crud_menu.bulk_delete_menu(
+        db, 
+        current_merchant.id, 
+        data.menu_ids
+    )
+    
+    if deleted_count == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="No menus found or you don't own these menus"
+        )
+    
+    return {
+        "message": f"{deleted_count} menu(s) deleted successfully",
+        "deleted_count": deleted_count
+    }
+
 @router.delete("/{menu_id}/permanent-delete")
 async def permanent_delete_menu(
     menu_id: int,
@@ -223,3 +247,4 @@ async def permanent_delete_menu(
     return {
         "message": "Menu permanently deleted"
     }
+    

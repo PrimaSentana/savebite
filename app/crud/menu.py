@@ -1,8 +1,9 @@
 import cloudinary
 import cloudinary.uploader
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from app.models.menu import Menu, MenuStatus
+from app.models.merchants import Merchant
 from app.schemas.menu import MenuCreate, MenuUpdate
 import decimal
 
@@ -50,7 +51,7 @@ async def create_menu(db: AsyncSession, merchant_id: int, data: MenuCreate):
         discounted_price=data.discounted_price,
         discount_percentage=discount_pct,
         quantity=data.quantity,
-        max_order_per_user=data.max_order_per_user,
+        max_order_per_user=data.quantity,
         available_from=data.available_from,
         available_until=data.available_until,
     )
@@ -90,3 +91,15 @@ async def deactive_menu(db: AsyncSession, menu: Menu):
 async def delete_menu(db: AsyncSession, menu: Menu):
     await db.delete(menu)
     await db.commit()
+
+async def bulk_delete_menu(db: AsyncSession, merchant_id: int, menu_ids: list[int]):
+    result = await db.execute(
+        delete(Menu)
+        .where(
+            Menu.id.in_(menu_ids),
+            Menu.merchant_id == merchant_id
+        ).execution_options(synchronize_session=False)
+    )
+    await db.commit()
+    return result.rowcount
+
