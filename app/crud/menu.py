@@ -16,7 +16,7 @@ def calculate_discount_percentage(
 async def get_menus_by_merchant(db: AsyncSession, merchant_id: int):
     result = await db.execute(
         select(Menu)
-        .where(Menu.merchant_id == merchant_id, Menu.is_active == True)
+        .where(Menu.merchant_id == merchant_id)
         .order_by(Menu.created_at.desc())
     )
     return result.scalars().all()
@@ -25,9 +25,10 @@ async def get_all_menu(db: AsyncSession) -> list[Menu]:
     result = await db.execute(select(Menu))
     return result.scalars().all()
 
+#catatan untuk kondisi aktif dan non-aktif
 async def get_menu_by_id(db: AsyncSession, menu_id: int):
     result = await db.execute(
-        select(Menu).where(Menu.id == menu_id, Menu.is_active == True)
+        select(Menu).where(Menu.id == menu_id)
     )
     return result.scalar_one_or_none()
 
