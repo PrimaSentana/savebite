@@ -44,4 +44,4 @@ def start_scheduler():
         replace_existing=True
     )
     scheduler.start()
-    print(f"[Scheduler] Started - checking expired menus every 1 minute")
+    print(f"[Scheduler] Started - checking expired menus every 5 minute")
