@@ -1,11 +1,13 @@
 from datetime import datetime
 from time import time
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from app.core.scheluder import start_scheduler
 from app.crud import merchants
 from app.database import AsyncSessionLocal, engine, Base
-from app.routers import auth, menu, users, merchants
+from app.routers import auth, dashboard, menu, users, merchants
 
 app = FastAPI()
 
@@ -24,6 +26,15 @@ async def shutdown():
     print("[Scheduler] Stopped")
     await AsyncSessionLocal().close()
     
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code = 422,
+        content = {
+            "detail": exc.errors()
+        }
+    )
+    
 @app.get("/sys-info/timezone")
 def check_timezone():
     local_time = datetime.now().astimezone()
@@ -36,7 +47,8 @@ def check_timezone():
     }
         
 app.include_router(auth.router) 
-app.include_router(users.router)      
+app.include_router(users.router)
+app.include_router(dashboard.router)  
 app.include_router(merchants.router) 
 app.include_router(menu.router)
 
