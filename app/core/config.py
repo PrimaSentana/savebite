@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     CLOUDINARY_CLOUD_NAME: str
     CLOUDINARY_API_KEY: int
     CLOUDINARY_API_SECRET: str
+    MIDTRANS_SERVER_KEY: str
+    MIDTRANS_CLIENT_KEY: str
+    MIDTRANS_IS_PRODUCTION: bool = False
     
     class Config:
         env_file = ".env"
