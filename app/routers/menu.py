@@ -133,7 +133,7 @@ async def edit_menu_stock(
     
     if menu.quantity == 0:
         menu.status = MenuStatus.SOLD_OUT
-    elif menu.quantity == MenuStatus.SOLD_OUT and data.quantity:
+    elif menu.status == MenuStatus.SOLD_OUT and data.quantity:
         menu.status = MenuStatus.ON_SALE
         
     await db.commit()

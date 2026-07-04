@@ -32,7 +32,7 @@ async def get_transaction_by_id(db: AsyncSession, transaction_id: int):
 async def get_user_transactions(db: AsyncSession, user_id: int):
     result = await db.execute(
         select(Order)
-        .where(Order.user.id == user_id)
+        .where(Order.user_id == user_id)
         .options(selectinload(Order.items))
         .order_by(Order.created_at.desc())
     )
