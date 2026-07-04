@@ -13,7 +13,7 @@ from app.models.transaction import Order, TransactionStatus
 from app.models.user import User
 from app.schemas.transaction import CheckoutRequest, TransactionResponse
 from app.crud import transaction as crud_transaction
-from app.core.midtrans import snap
+from app.core.midtrans import snap, core_api
 from sqlalchemy.orm import selectinload
 
 
@@ -85,7 +85,7 @@ async def checkout(
             "email": current_user.email
         },
         "expiry": {
-            "unit": "hour",
+            "unit": "minute",
             "duration": 1
         }
     }
@@ -132,6 +132,37 @@ async def get_transaction_detail(
         raise HTTPException(status_code=403, detail="Tidak dapat akses")
     return order
 
+@router.post("/{transaction_id}/cancel")
+async def cancel_transaction(
+    transaction_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    order = await crud_transaction.get_transaction_by_id(db, transaction_id)
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
+    if order.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Akses ditolak")
+    
+    if order.status != TransactionStatus.PENDING:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Tidak bisa membatalkan transaksi dengan status '{order.status}"
+        )
+    
+    try:
+        core_api.transactions.cancel(order.order_id)
+    except Exception as e:
+        print(f"[Cancel] Midtrans cancel error: {e}")
+    
+    await crud_transaction.update_transaction_status(db, order, TransactionStatus.CANCELLED)
+    await crud_transaction.rollback_stock(db, order)
+    
+    return {
+        "message": "Transaksi berhasil dibatalkan"
+    }
+
 @router.post("/webhook/midtrans")
 async def midtrans_webhook(
     request: Request,
@@ -176,7 +207,19 @@ async def midtrans_webhook(
         print(f"[Webhook] Order not found: {order_id}")
         raise HTTPException(status_code=403, detail="Order not found")
     
+    finalized_statuses = [
+        TransactionStatus.PAID,
+        TransactionStatus.COMPLETED,
+        TransactionStatus.CANCELLED,
+    ]
+    if order.status in finalized_statuses:
+        print(f"[Webhook] Order {order_id} already finalized - skipping")
+        return {
+            "message": "Already finalized"
+        }
+    
     new_status = None
+    should_rollback = False
     
     if transaction_status == "capture":
         if fraud_status == "accept":
@@ -187,10 +230,13 @@ async def midtrans_webhook(
         new_status = TransactionStatus.PENDING
     elif transaction_status in ["deny", "cancel"]:
         new_status = TransactionStatus.CANCELLED
+        should_rollback = True
     elif transaction_status == "expire":
         new_status = TransactionStatus.EXPIRED
+        should_rollback = True
     elif transaction_status == "failure":
         new_status = TransactionStatus.FAILED
+        should_rollback = True
         
     if new_status:
         await crud_transaction.update_transaction_status(
@@ -201,6 +247,10 @@ async def midtrans_webhook(
             midtrans_transaction_id = midtrans_transaction_id
         )
         print(f"[Webhook] Order {order_id} updated to {new_status}")
+        
+        if should_rollback:
+            await crud_transaction.rollback_stock(db, order)
+            print(f"[Webhook] Stock rolled back for order {order_id}")
     
     return {
         "message": "Webhook received"
