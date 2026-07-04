@@ -8,7 +8,7 @@ from app.core.scheluder import start_scheduler
 from app.crud import merchants
 from app.models import menu, merchants, transaction_item, transaction, user
 from app.database import AsyncSessionLocal, engine, Base
-from app.routers import auth, dashboard, menu, users, merchants, transaction as transaction_router
+from app.routers import auth, dashboard, menu, merchant_transaction, users, merchants, transaction as transaction_router
 
 app = FastAPI()
 
@@ -52,9 +52,11 @@ def check_timezone():
 app.include_router(auth.router) 
 app.include_router(users.router)
 app.include_router(dashboard.router)  
-app.include_router(merchants.router) 
+app.include_router(merchants.router)
+app.include_router(merchant_transaction.router)
 app.include_router(menu.router)
 app.include_router(transaction_router.router)
+
 
 @app.get('/')
 def test():
