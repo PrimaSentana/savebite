@@ -1,4 +1,3 @@
-# app/models/transaction.py
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric, Enum, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

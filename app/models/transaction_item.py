@@ -1,4 +1,3 @@
-# app/models/transaction_item.py
 from sqlalchemy import Column, Integer, String, ForeignKey, Numeric
 from sqlalchemy.orm import relationship
 from app.database import Base
