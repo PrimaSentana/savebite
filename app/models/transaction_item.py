@@ -10,12 +10,10 @@ class TransactionItem(Base):
     transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False)
     menu_id = Column(Integer, ForeignKey("menus.id"), nullable=False)
 
-    # Snapshot data — in case menu gets edited/deleted later, order history stays accurate
     menu_title = Column(String, nullable=False)
-    menu_price = Column(Numeric(10, 2), nullable=False)  # price at time of purchase
+    menu_price = Column(Numeric(10, 2), nullable=False)
     quantity = Column(Integer, nullable=False)
-    subtotal = Column(Numeric(10, 2), nullable=False)    # menu_price * quantity
+    subtotal = Column(Numeric(10, 2), nullable=False)
 
-    # Relationships
     transaction = relationship("Order", back_populates="items")
     menu = relationship("Menu")
