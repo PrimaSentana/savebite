@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta, timezone
 import decimal
-from tkinter import Menu
 import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.models.menu import Menu, MenuStatus
 from app.models.transaction import Order, TransactionStatus
 from app.models.transaction_item import TransactionItem
 from app.schemas.transaction import CheckoutRequest
@@ -70,7 +69,7 @@ async def create_transaction(
         subtotal = subtotal,
         total_amount = subtotal,
         notes = data.notes,
-        expired_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        expired_at = datetime.now(timezone.utc) + timedelta(minutes=1)
     )
     db.add(order)
     await db.flush()
@@ -114,3 +113,27 @@ async def update_transaction_status(
     await db.commit()
     await db.refresh(order)
     return order
+
+async def rollback_stock(db: AsyncSession, order: Order):
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order.id)
+        .options(selectinload(Order.items))
+    )
+    order_with_items = result.scalar_one_or_none()
+    
+    if not order_with_items:
+        return
+    
+    for item in order_with_items.items:
+        menu_result = await db.execute(
+            select(Menu).where(Menu.id == item.menu_id)
+        )
+        menu = menu_result.scalar_one_or_none()
+        
+        if menu:
+            menu.quantity += item.quantity
+            if menu.status == MenuStatus.SOLD_OUT and menu.quantity > 0:
+                menu.status = MenuStatus.ON_SALE
+    
+    await db.commit()
