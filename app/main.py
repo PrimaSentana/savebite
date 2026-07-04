@@ -6,8 +6,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.core.scheluder import start_scheduler
 from app.crud import merchants
+from app.models import menu, merchants, transaction_item, transaction, user
 from app.database import AsyncSessionLocal, engine, Base
-from app.routers import auth, dashboard, menu, users, merchants
+from app.routers import auth, dashboard, menu, users, merchants, transaction as transaction_router
 
 app = FastAPI()
 
@@ -45,12 +46,15 @@ def check_timezone():
         "current_time_iso": local_time.isoformat(),
         "utc_offset_hours": local_time.utcoffset().total_seconds() / 3600
     }
+    
+
         
 app.include_router(auth.router) 
 app.include_router(users.router)
 app.include_router(dashboard.router)  
 app.include_router(merchants.router) 
 app.include_router(menu.router)
+app.include_router(transaction_router.router)
 
 @app.get('/')
 def test():
