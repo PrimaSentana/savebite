@@ -22,7 +22,10 @@ async def get_all_orders(
     result = await db.execute(
         select(Order)
         .where(Order.merchant_id == current_merchant.id)
-        .options(selectinload(Order.items))
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.user)
+        )
         .order_by(Order.created_at.desc())
     )
     return result.scalars().all()
