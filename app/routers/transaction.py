@@ -85,7 +85,7 @@ async def checkout(
             "email": current_user.email
         },
         "expiry": {
-            "unit": "minute",
+            "unit": "hour",
             "duration": 1
         }
     }
