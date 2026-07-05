@@ -23,3 +23,5 @@ class Merchant(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
     menus = relationship("Menu", back_populates="merchant", cascade="all, delete-orphan")
+    
+    transactions = relationship("Order", back_populates="merchant")

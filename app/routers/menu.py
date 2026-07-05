@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.menu import MenuCategory, MenuStatus
 from app.models.merchants import Merchant
 from app.core.deps import get_current_merchant
-from app.schemas.menu import BulkDeleteMenu, MenuCreate, MenuUpdate, MenuResponse, StockUpdate
+from app.schemas.menu import BulkDeleteMenu, MenuCreate, MenuUpdate, MenuResponse, PeriodUpdate, StockUpdate
 from app.core.cloudinary import delete_menu_image, upload_menu_image
 from app.crud import menu as crud_menu
 
@@ -133,9 +133,33 @@ async def edit_menu_stock(
     
     if menu.quantity == 0:
         menu.status = MenuStatus.SOLD_OUT
-    elif menu.quantity == MenuStatus.SOLD_OUT and data.quantity:
+    elif menu.status == MenuStatus.SOLD_OUT and data.quantity:
         menu.status = MenuStatus.ON_SALE
         
+    await db.commit()
+    await db.refresh(menu)
+    return menu
+
+@router.patch("/{menu_id}/period", response_model=MenuResponse)
+async def update_period(
+    menu_id: int,
+    data: PeriodUpdate,
+    current_merchant: Merchant = Depends(get_current_merchant),
+    db: AsyncSession = Depends(get_db)
+):
+    menu = await crud_menu.get_menu_by_id(db, menu_id)
+    if not menu:
+        raise HTTPException(status_code=404, detail="Menu tidak ditemukan")
+    if menu.merchant_id != current_merchant.id:
+        raise HTTPException(status_code=403, detail="Akses ditolak. Anda bukan pemilik menu ini")
+    
+    menu.available_from = data.available_from
+    menu.available_until = data.available_until
+    
+    if data.available_until is None and not menu.is_active:
+        menu.is_active = True
+        menu.status = MenuStatus.ON_SALE
+    
     await db.commit()
     await db.refresh(menu)
     return menu

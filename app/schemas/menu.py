@@ -57,6 +57,17 @@ class StockUpdate(BaseModel):
             raise ValueError("Quantity cannot be negative")
         return v
     
+class PeriodUpdate(BaseModel):
+    available_from: datetime | None = None
+    available_until: datetime | None = None
+    
+    @model_validator(mode="after")
+    def validate_period(self):
+        if self.available_from and self.available_until:
+            if self.available_from >= self.available_until:
+                raise ValueError("Waktu Tersedia Sale tidak boleh melebihi Waktu Berakhir Sale")
+        return self
+    
 class MenuResponse(BaseModel):
     id: int
     merchant_id: int
