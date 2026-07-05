@@ -41,6 +41,7 @@ class TransactionResponse(BaseModel):
     completed_at: datetime | None = None
     created_at: datetime
     items: list[TransactionItemResponse] = []
+    customer_username: str | None = None
     
     class config:
         from_attributes = True
