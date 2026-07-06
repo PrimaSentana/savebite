@@ -1,10 +1,13 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.merchants import extract_location, get_nearby_merchants
+from app.crud.search import search_menus, search_merchants
 from app.database import get_db
+from app.models.menu import MenuCategory
 from app.schemas.merchants import NearbyMerchantResponse
+from app.schemas.search import SearchParams, SearchResponse
 
 
 router = APIRouter(prefix="/discovery", tags=["Discovery"])
@@ -47,3 +50,39 @@ async def get_nearby_merchants_endpoint(
             available_menu_count = available_menu_count,
         ))
     return response
+
+@router.get("/search", response_model=SearchResponse)
+async def search(
+    keyword: str | None = Query(None, description="Search keyword"),
+    category: MenuCategory | None = Query(None, description="Filter by category"),
+    max_price: float | None = Query(None, description="Max discounted price"),
+    min_discount: float | None = Query(None, description="Minimum discount percentage"),
+    sort_by: str = Query("newest", description="Sort by: discount, price_asc, price_desc, newest"),
+    db: AsyncSession = Depends(get_db)
+):
+    if not any([keyword, category, max_price, min_discount]):
+        raise HTTPException(
+            status_code=400,
+            detail="Provide at least a keyword or one filter"
+        )
+
+    params = SearchParams(
+        keyword=keyword,
+        category=category,
+        max_price=max_price,
+        min_discount=min_discount,
+        sort_by=sort_by,
+    )
+
+    import asyncio
+    merchants, menus = await asyncio.gather(
+        search_merchants(db, params),
+        search_menus(db, params),
+    )
+
+    return SearchResponse(
+        merchants=merchants,
+        menus=menus,
+        total_merchants=len(merchants),
+        total_menus=len(menus),
+    )
