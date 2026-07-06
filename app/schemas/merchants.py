@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator
 
+from app.schemas.menu import MenuResponse
+
 
 class MerchantCreate(BaseModel):
     email: EmailStr
@@ -42,6 +44,24 @@ class MerchantResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class MerchantDetailResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    email: str
+    phone: str
+    logo_url: str | None = None
+    banner_url: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    is_active: bool
+    is_open: bool
+    menus: list[MenuResponse] = []
+
+    class Config:
+        from_attributes = True
+
 class MerchantResponceImage(BaseModel):
     id: int
     email: str
@@ -70,3 +90,20 @@ class ChangeMerchantPassword(BaseModel):
 
 class ChangeMerchantEmail(BaseModel):
     new_email: EmailStr
+    
+class NearbyMerchantResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    logo_url: str | None = None
+    banner_url: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    distance_meters: float
+    distance_text: str
+    is_active: bool
+    available_menu_count: int
+    
+    class Config:
+        from_attributes = True
