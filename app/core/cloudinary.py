@@ -80,6 +80,20 @@ async def upload_menu_image(file_bytes: bytes, menu_id: int) -> str:
     )
     return result["secure_url"]
 
+async def upload_review_photo(file_bytes: bytes, review_id: int) -> str:
+    result = cloudinary.uploader.upload(
+        file_bytes,
+        folder="review_photos",
+        public_id=f"review_{review_id}",
+        overwrite=True,
+        transformation = [
+            {"width": 800, "height": 600, "crop": "fill"},
+            {"quality": "auto"},
+            {"format": "webp"}
+        ]
+    )
+    return result["secure_url"]
+
 async def delete_profile_photo(user_id: int):
     cloudinary.uploader.destroy(f"profile_photos/user_{user_id}")
     
@@ -91,3 +105,6 @@ async def delete_merchant_banner(merchant_id: int):
 
 async def delete_menu_image(menu_id: int):
     cloudinary.uploader.destroy(f"menu_images/menu_{menu_id}")
+    
+async def delete_review_photo(review_id: int):
+    cloudinary.uploader.destroy(f"review_photos/review_{review_id}")
