@@ -1,5 +1,5 @@
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, null
+from sqlalchemy import Column, Float, Integer, String, Boolean, DateTime, null
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 # from shapely.geometry import Point
@@ -20,8 +20,11 @@ class Merchant(Base):
     location = Column(Geometry(geometry_type='POINT', srid=4326), nullable=False)
     is_active = Column(Boolean, default=True)
     is_open = Column(Boolean, default=False)
+    average_rating = Column(Float, nullable=True, default=None)
+    review_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
     menus = relationship("Menu", back_populates="merchant", cascade="all, delete-orphan")
     
     transactions = relationship("Order", back_populates="merchant")
+    reviews = relationship("Review", back_populates="merchant")

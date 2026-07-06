@@ -40,6 +40,8 @@ class MerchantResponse(BaseModel):
     longitude: float | None = None
     is_active: bool
     is_open: bool
+    average_rating: float | None = None
+    review_count: int = 0
 
     class Config:
         from_attributes = True

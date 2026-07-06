@@ -45,3 +45,24 @@ class TransactionResponse(BaseModel):
     
     class config:
         from_attributes = True
+
+class UserTransactionResponse(BaseModel):
+    id: int
+    order_id: str
+    user_id: int
+    merchant_id: int
+    subtotal: decimal.Decimal
+    total_amount: decimal.Decimal
+    status: TransactionStatus
+    snap_token: str | None = None
+    payment_type: str | None = None
+    notes: str | None = None
+    paid_at: datetime | None = None
+    expired_at: datetime | None = None
+    completed_at: datetime | None = None
+    created_at: datetime
+    items: list[TransactionItemResponse] = []
+    merchant_name: str | None = None
+    
+    class config:
+        from_attributes = True
