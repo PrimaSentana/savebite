@@ -6,14 +6,18 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
+from app.crud.transaction import get_user_transactions
 from app.database import get_db
 from app.models.menu import MenuCategory, MenuStatus
 from app.models.merchants import Merchant
-from app.core.deps import get_current_merchant
+from app.core.deps import get_current_user
+from app.models.transaction import Order
+from app.models.user import User
 from app.schemas.menu import BulkDeleteMenu, MenuCreate, MenuUpdate, MenuResponse, StockUpdate
 from app.core.cloudinary import delete_menu_image, upload_menu_image
 from app.crud import menu as crud_menu, merchants as crud_merchants
 from app.schemas.merchants import MerchantDetailResponse, MerchantResponse
+from app.schemas.transaction import UserTransactionResponse
 
 
 router = APIRouter(prefix="/dashboard", tags=["Users Dashboard"])
@@ -81,3 +85,12 @@ async def get_merchant_detail(
         is_open = merchant.is_open,
         menus = active_menus
     )
+    
+# get user transaction
+@router.get("/user/activity", response_model=List[UserTransactionResponse])
+async def get_user_activity(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await get_user_transactions(db, current_user.id)
+    return result
