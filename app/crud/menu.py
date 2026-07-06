@@ -1,3 +1,5 @@
+from typing import List
+
 import cloudinary
 import cloudinary.uploader
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +14,6 @@ def calculate_discount_percentage(
     discounted: decimal.Decimal
 ) -> decimal.Decimal:
     return round(((original - discounted) / original) * 100, 2)
-
 
 async def get_menus_by_merchant(db: AsyncSession, merchant_id: int):
     result = await db.execute(
@@ -32,6 +33,19 @@ async def get_menu_by_id(db: AsyncSession, menu_id: int):
         select(Menu).where(Menu.id == menu_id) #catatan untuk kondisi aktif dan non-aktif
     )
     return result.scalar_one_or_none()
+
+async def get_menu_hemat(db: AsyncSession) -> List[Menu]:
+    result = await db.execute(
+        select(Menu)
+        .where(
+            Menu.discount_percentage >= 50.00,
+            Menu.is_active == True,
+            Menu.quantity > 0,
+            Menu.status == MenuStatus.ON_SALE
+        )
+        .order_by(Menu.available_until.asc())
+    )
+    return result.scalars().all()
 
 async def get_menu_by_id_deactive(db: AsyncSession, menu_id: int):
     result = await db.execute(

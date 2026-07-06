@@ -42,7 +42,7 @@ async def update_merchant_email(
     current_merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db)
 ):
-    existing = get_merchant_by_email(db, data.new_email)
+    existing = await get_merchant_by_email(db, data.new_email)
     if existing:
         raise HTTPException(
             status_code=400,

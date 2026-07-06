@@ -32,6 +32,12 @@ async def authenticate_user(db: AsyncSession, email: str, password: str):
         return None
     return user
 
+async def update_username(db: AsyncSession, user: User, username: str):
+    user.username = username
+    await db.commit()
+    await db.refresh(user)
+    return user
+
 async def change_user_email(db: AsyncSession, user: User, new_email: str):
     user.email = new_email
     await db.commit()

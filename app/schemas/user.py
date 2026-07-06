@@ -27,6 +27,18 @@ class UserLogin(BaseModel):
     
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+class UpdateUsername(BaseModel):
+    username: str
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v):
+        if len(v) < 3:
+            raise ValueError("Username must be at least 3 characters")
+        if len(v) > 50:
+            raise ValueError("Username max 50 characters")
+        return v
     
 class ChangePassword(BaseModel):
     current_password: str
