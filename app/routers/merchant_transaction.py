@@ -13,7 +13,7 @@ from app.crud.transaction import update_transaction_status
 
 router = APIRouter(prefix="/merchant/orders", tags=["Merchant Orders"])
 
-# get orders
+# get orders merchant
 @router.get("/", response_model=List[TransactionResponse])
 async def get_all_orders(
     current_merchant: Merchant = Depends(get_current_merchant),
