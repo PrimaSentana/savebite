@@ -84,6 +84,8 @@ def build_merchant_response(merchant: Merchant) -> dict:
         "is_open": merchant.is_open,
         "latitude": location["latitude"],
         "longitude": location["longitude"],
+        "average_rating": merchant.average_rating,
+        "review_count": merchant.review_count
     }
     
 async def delete_merchant(db: AsyncSession, merchant: Merchant):
