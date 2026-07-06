@@ -32,7 +32,10 @@ async def get_user_transactions(db: AsyncSession, user_id: int):
     result = await db.execute(
         select(Order)
         .where(Order.user_id == user_id)
-        .options(selectinload(Order.items))
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.merchant)
+        )
         .order_by(Order.created_at.desc())
     )
     return result.scalars().all()

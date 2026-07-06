@@ -47,3 +47,7 @@ class Order(Base):
     @property
     def customer_username(self) -> str | None:
         return self.user.username if self.user else None
+
+    @property
+    def merchant_name(self) -> str | None:
+        return self.merchant.name if self.merchant else None
