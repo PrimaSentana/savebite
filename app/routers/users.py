@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.cloudinary import delete_profile_photo, upload_profile_photo
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import ChangeEmail, ChangePassword, UserResponse
+from app.schemas.user import ChangeEmail, ChangePassword, UpdateUsername, UserResponse
 from app.crud import user as crud_user
 from app.core.deps import get_current_user
 
@@ -24,6 +24,19 @@ async def get_dashboard(current_user: User = Depends(get_current_user)):
         "email": current_user.email
     }
     
+@router.put("/me/username", response_model=UserResponse)
+async def update_my_username(
+    data: UpdateUsername,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if username already taken
+    existing = await crud_user.get_user_by_username(db, data.username)
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already taken")
+
+    return await crud_user.update_username(db, current_user, data.username)
+
 @router.put("/me/email", response_model=ChangeEmail)
 async def update_email(
     data: ChangeEmail,
