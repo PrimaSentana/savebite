@@ -74,7 +74,6 @@ async def search(
         sort_by=sort_by,
     )
 
-    # Run both searches concurrently
     import asyncio
     merchants, menus = await asyncio.gather(
         search_merchants(db, params),
