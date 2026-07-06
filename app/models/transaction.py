@@ -42,6 +42,7 @@ class Order(Base):
     user = relationship("User", back_populates="transactions")
     merchant = relationship("Merchant", back_populates="transactions")
     items = relationship("TransactionItem", back_populates="transaction", cascade="all, delete-orphan")
+    review = relationship("Review", back_populates="transaction", uselist=False)
     
     @property
     def customer_username(self) -> str | None:

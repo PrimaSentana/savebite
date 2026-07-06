@@ -6,9 +6,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.core.scheluder import start_scheduler
 from app.crud import merchants
-from app.models import menu, merchants, transaction_item, transaction, user
+from app.models import menu, merchants, transaction_item, transaction, user, review
 from app.database import AsyncSessionLocal, engine, Base
-from app.routers import auth, dashboard, discovery, menu, merchant_transaction, users, merchants, transaction as transaction_router
+from app.routers import auth, dashboard, discovery, menu, merchant_transaction, users, merchants, transaction as transaction_router, review as review_router
 
 app = FastAPI()
 
@@ -57,6 +57,7 @@ app.include_router(merchants.router)
 app.include_router(merchant_transaction.router)
 app.include_router(menu.router)
 app.include_router(transaction_router.router)
+app.include_router(review_router.router)
 
 
 @app.get('/')

@@ -16,3 +16,4 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
 
     transactions = relationship("Order", back_populates="user")
+    reviews = relationship("Review", back_populates="user")
