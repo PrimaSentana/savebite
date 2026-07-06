@@ -11,7 +11,7 @@ from app.database import get_db
 from app.models.menu import Menu, MenuStatus
 from app.models.transaction import Order, TransactionStatus
 from app.models.user import User
-from app.schemas.transaction import CheckoutRequest, TransactionResponse
+from app.schemas.transaction import CheckoutRequest, TransactionResponse, UserTransactionResponse
 from app.crud import transaction as crud_transaction
 from app.core.midtrans import snap, core_api
 from sqlalchemy.orm import selectinload
@@ -112,7 +112,7 @@ async def checkout(
     return order
 
 #user order history
-@router.get("/my-orders", response_model=List[TransactionResponse])
+@router.get("/my-orders", response_model=List[UserTransactionResponse])
 async def get_my_orders(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
