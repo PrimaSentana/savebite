@@ -23,8 +23,15 @@ async def get_menus_by_merchant(db: AsyncSession, merchant_id: int):
     )
     return result.scalars().all()
 
+#for user
 async def get_all_menu(db: AsyncSession) -> list[Menu]:
-    result = await db.execute(select(Menu))
+    result = await db.execute(
+        select(Menu)
+        .where(
+            Menu.is_active == True,
+        )
+        .order_by(Menu.available_until.asc())
+    )
     return result.scalars().all()
 
 
