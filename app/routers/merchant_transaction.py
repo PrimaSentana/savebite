@@ -43,7 +43,11 @@ async def get_orders_by_status(
             Order.merchant_id == current_merchant.id,
             Order.status == status
         )
-        .options(selectinload(Order.items))
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.user)
+        )
+        
         .order_by(Order.created_at.desc())
     )
     return result.scalars().all()
@@ -61,7 +65,10 @@ async def get_order_detail(
             Order.id == order_id,
             Order.merchant_id == current_merchant.id
         )
-        .options(selectinload(Order.items))
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.user)
+        )
     )
     order = result.scalar_one_or_none()
     if not order:
