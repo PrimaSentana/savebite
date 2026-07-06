@@ -1,11 +1,14 @@
 # app/crud/merchant.py
+from geoalchemy2.types import Geography
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func, and_, exists
 from geoalchemy2.shape import from_shape, to_shape
 from shapely.geometry import Point
 from app.models.merchants import Merchant
+from app.models.menu import MenuStatus, Menu
 from app.schemas.merchants import MerchantCreate, MerchantUpdate
 from app.core.security import hash_password, verify_password
+from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakePoint, ST_SetSRID
 
 async def get_merchant_by_email(db: AsyncSession, email: str):
     result = await db.execute(select(Merchant).where(Merchant.email == email))
@@ -42,7 +45,7 @@ async def change_merchant_email(db:AsyncSession, new_email: str, merchant: Merch
     merchant.email = new_email
     await db.commit()
     await db.refresh(merchant)
-    return
+    return merchant
 
 async def change_merchant_password(db:AsyncSession, merchant: Merchant, current_password: str, new_password: str):
     if not verify_password(current_password, merchant.password):
@@ -85,4 +88,66 @@ def build_merchant_response(merchant: Merchant) -> dict:
     
 async def delete_merchant(db: AsyncSession, merchant: Merchant):
     await db.delete(merchant) 
-    await db.commit() 
+    await db.commit()
+    
+async def get_nearby_merchants(
+    db: AsyncSession,
+    latitude: float,
+    longitude: float,
+    radius_meters: float = 5000
+):
+    user_location = ST_SetSRID(
+        ST_MakePoint(longitude, latitude), 4326
+    )
+    
+    has_active_menu = (
+        select(Menu)
+        .where(
+            and_(
+                Menu.merchant_id == Merchant.id,
+                Menu.status == MenuStatus.ON_SALE,
+                Menu.is_active == True,
+                Menu.quantity > 0
+            )
+        )
+        .exists()
+    )
+    
+    active_menu_count = (
+        select(func.count())
+        .where(
+            and_(
+                Menu.merchant_id == Merchant.id,
+                Menu.status == MenuStatus.ON_SALE,
+                Menu.is_active == True,
+                Menu.quantity > 0
+            )
+        )
+        .scalar_subquery()
+    )
+    
+    distance = ST_Distance(
+        Merchant.location.cast(Geography),
+        user_location.cast(Geography)
+    )
+    
+    result = await db.execute(
+        select(
+            Merchant,
+            distance.label("distance_meters"),
+            active_menu_count.label("available_menu_count")
+        )
+        .where(
+            Merchant.is_active == True,
+            ST_DWithin(
+                Merchant.location.cast(Geography),
+                user_location.cast(Geography),
+                radius_meters
+            ),
+            has_active_menu
+        )
+        .order_by(distance)
+    )
+    
+    rows = result.all()
+    return rows
