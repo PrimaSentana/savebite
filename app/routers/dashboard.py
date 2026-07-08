@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from typing import List, Optional
+from typing import Dict, List, Optional
 from app.crud.review import get_reviews_by_merchant
 from app.crud.transaction import get_user_transactions
 from app.database import get_db
@@ -162,3 +162,61 @@ async def get_best_seller_menus(
         top_menus.append(menu_obj)
             
     return top_menus
+
+@router.get("/menu/top-merchant", response_model=List[MerchantResponse])
+async def get_top_merchant(
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = await db.execute(
+        select(Merchant)
+        .where(Merchant.average_rating > 3)
+    )
+    merchants = stmt.scalars().all()
+    result = []
+    for merchant in merchants:
+        location = crud_merchants.extract_location(merchant)
+        result.append({
+            "id": merchant.id,
+            "email": merchant.email,
+            "name": merchant.name,
+            "phone": merchant.phone,
+            "address": merchant.address,
+            "description": merchant.description,
+            "logo_url": merchant.logo_url,
+            "banner_url": merchant.banner_url,
+            "is_active": merchant.is_active,
+            "is_open": merchant.is_open,
+            "latitude": location["latitude"],
+            "longitude": location["longitude"],
+            "average_rating": merchant.average_rating,
+            "review_count": merchant.review_count,
+            "balance": merchant.balance
+        })
+    return result
+
+@router.get("/menu/by-category", response_model=Dict[str, List[MenuResponse]])
+async def get_all_menu_by_category(
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(Menu)
+        .where(
+            Menu.is_active == True,
+            Menu.quantity > 0,
+            Menu.status == MenuStatus.ON_SALE
+        )
+    )
+    menus = result.scalars().all()
+    
+    grouped_menus: Dict[str, List[MenuResponse]] = {
+        category.value: [] for category in MenuCategory
+    }
+    
+    for menu in menus:
+        category_key = menu.category.value if hasattr(menu.category, "value") else str(menu.category).lower()
+        
+        if category_key in grouped_menus:
+            grouped_menus[category_key].append(menu)
+        else:
+            grouped_menus.setdefault("other", []).append(menu)
+    return grouped_menus
