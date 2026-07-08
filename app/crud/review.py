@@ -5,7 +5,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.merchants import Merchant
 from app.models.review import Review
+from app.models.transaction import Order
+from app.models.transaction_item import TransactionItem
 from app.schemas.review import ReviewCreate
+
+async def get_review_by_id(db: AsyncSession, review_id: int):
+    result = await db.execute(
+        select(Review)
+        .where(Review.id == review_id)
+        .options(
+            selectinload(Review.user),
+            selectinload(Review.transaction).selectinload(Order.items).selectinload(TransactionItem.menu)
+        )
+    )
+    return result.scalar_one_or_none()
 
 async def get_review_by_transaction(db: AsyncSession, transaction_id: int):
     result = await db.execute(
@@ -17,7 +30,10 @@ async def get_reviews_by_merchant(db: AsyncSession, merchant_id: int):
     result = await db.execute(
         select(Review)
         .where(Review.merchant_id == merchant_id)
-        .options(selectinload(Review.user))
+        .options(
+            selectinload(Review.user),
+            selectinload(Review.transaction).selectinload(Order.items).selectinload(TransactionItem.menu)
+        )
         .order_by(Review.created_at.desc())
     )
     return result.scalars().all()

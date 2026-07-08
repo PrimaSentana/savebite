@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator
 
 from app.schemas.menu import MenuResponse
+from app.schemas.review import ReviewResponse
 
 
 class MerchantCreate(BaseModel):
@@ -61,6 +62,7 @@ class MerchantDetailResponse(BaseModel):
     is_active: bool
     is_open: bool
     menus: list[MenuResponse] = []
+    reviews: list[ReviewResponse] = []
 
     class Config:
         from_attributes = True

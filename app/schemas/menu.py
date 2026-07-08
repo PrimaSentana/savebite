@@ -86,6 +86,8 @@ class MenuResponse(BaseModel):
     available_until: datetime | None = None
     created_at: datetime
     updated_at: datetime | None = None
+    
+    total_sold: int | None = None #hapus jak kalo bikin ribet response route lain wkwk
 
     class Config:
         from_attributes = True

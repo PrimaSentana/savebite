@@ -1,12 +1,16 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import cloudinary
 from app.core.cloudinary import delete_merchant_banner, delete_merchant_logo, upload_banner_photo_merchant, upload_profile_photo_merchant
 from app.core.deps import get_current_merchant
 from app.crud.merchants import build_merchant_response, change_merchant_email, change_merchant_password, delete_merchant, get_merchant_by_email, update_merchant
+from app.crud.review import get_reviews_by_merchant
 from app.database import get_db
 from app.models.merchants import Merchant
 from app.schemas.merchants import ChangeMerchantEmail, ChangeMerchantPassword, MerchantResponceImage, MerchantResponse, MerchantUpdate
+from app.schemas.review import ReviewMenuResponse, ReviewResponse
 from app.schemas.user import UserResponse
 from app.crud import menu as crud_menu
 
@@ -178,3 +182,39 @@ async def delete_merchant_account(
     return {
         "message": "Merchant account permanently deleted"
     }
+
+@router.get("/reviews", response_model=List[ReviewResponse])
+async def get_merchant_reviews(
+    current_merchant: Merchant = Depends(get_current_merchant),
+    db: AsyncSession = Depends(get_db)
+):
+    results = await get_reviews_by_merchant(db, current_merchant.id)
+    reviews = []
+    for review in results:
+        ordered_menus = []
+        if review.transaction and review.transaction.items:
+            for item in review.transaction.items:
+                if item.menu:
+                    ordered_menus.append(ReviewMenuResponse(
+                        id = item.menu.id,
+                        title = item.menu_title,
+                        image_url = item.menu.image_url,
+                        discounted_price = float(item.menu_price),
+                        quantity = item.quantity
+                    ))
+        reviews.append({
+            "id": review.id,
+            "user_id": review.user_id,
+            "merchant_id": review.merchant_id,
+            "transaction_id": review.transaction_id,
+            "rating": review.rating,
+            "comment": review.comment,
+            "photo_url": review.photo_url,
+            "merchant_reply": review.merchant_reply,
+            "replied_at": review.replied_at,
+            "created_at": review.created_at,
+            "updated_at": review.updated_at,
+            "reviewer_username": review.user.username if review.user else None,
+            "ordered_menus": ordered_menus,
+        })
+    return reviews
