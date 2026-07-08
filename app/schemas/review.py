@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from pydantic import BaseModel, field_validator
 
 class ReviewCreate(BaseModel):
@@ -17,6 +18,16 @@ class ReviewCreate(BaseModel):
 
 class MerchantReplyCreate(BaseModel):
     reply: str
+    
+class ReviewMenuResponse(BaseModel):
+    id: int
+    title: str
+    image_url: str | None = None
+    discounted_price: float
+    quantity: int
+
+    class Config:
+        from_attributes = True
 
 class ReviewResponse(BaseModel):
     id: int
@@ -31,6 +42,7 @@ class ReviewResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None = None
     reviewer_username: str | None = None
+    ordered_menus: List[ReviewMenuResponse] = []
     
     class Config:
         from_attributes = True

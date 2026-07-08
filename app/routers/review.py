@@ -5,18 +5,53 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.cloudinary import upload_review_photo
 from app.core.deps import get_current_merchant, get_current_user
-from app.crud.review import add_merchant_reply, create_review, get_review_by_transaction, get_reviews_by_merchant
+from app.crud.review import add_merchant_reply, create_review, get_review_by_id, get_review_by_transaction, get_reviews_by_merchant
 from app.database import get_db
 from app.models.merchants import Merchant
 from app.models.review import Review
 from app.models.transaction import Order, TransactionStatus
 from app.models.user import User
-from app.schemas.review import MerchantReplyCreate, ReviewCreate, ReviewResponse
+from app.schemas.review import MerchantReplyCreate, ReviewCreate, ReviewMenuResponse, ReviewResponse
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
 
 ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
 MAX_SIZE = 5 * 1024 * 1024
+
+@router.get("/{review_id}", response_model=ReviewResponse)
+async def get_review(
+    review_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    review = await get_review_by_id(db, review_id)
+    
+    ordered_menus = []
+    if review.transaction and review.transaction.items:
+        for item in review.transaction.items:
+            if item.menu:
+                ordered_menus.append(ReviewMenuResponse(
+                    id = item.menu.id,
+                    title = item.menu_title,
+                    image_url = item.menu.image_url,
+                    discounted_price = float(item.menu_price),
+                    quantity = item.quantity
+                ))
+    
+    return {
+        "id": review.id,
+        "user_id": review.user_id,
+        "merchant_id": review.merchant_id,
+        "transaction_id": review.transaction_id,
+        "rating": review.rating,
+        "comment": review.comment,
+        "photo_url": review.photo_url,
+        "merchant_reply": review.merchant_reply,
+        "replied_at": review.replied_at,
+        "created_at": review.created_at,
+        "updated_at": review.updated_at,
+        "reviewer_username": review.user.username if review.user else None,
+        "ordered_menus": ordered_menus
+    }
 
 #user review
 @router.post("/", status_code=201)
@@ -81,10 +116,21 @@ async def get_merchant_reviews(
     merchant_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    reviews = await get_reviews_by_merchant(db, merchant_id)
-
-    return [
-        {
+    result = await get_reviews_by_merchant(db, merchant_id)
+    reviews = []
+    for review in result:
+        ordered_menus = []
+        if review.transaction and review.transaction.items:
+            for item in review.transaction.items:
+                if item.menu:
+                    ordered_menus.append(ReviewMenuResponse(
+                        id = item.menu.id,
+                        title = item.menu_title,
+                        image_url = item.menu.image_url,
+                        discounted_price = float(item.menu_price),
+                        quantity = item.quantity
+                    ))
+        reviews.append({
             "id": review.id,
             "user_id": review.user_id,
             "merchant_id": review.merchant_id,
@@ -97,9 +143,10 @@ async def get_merchant_reviews(
             "created_at": review.created_at,
             "updated_at": review.updated_at,
             "reviewer_username": review.user.username if review.user else None,
-        }
-        for review in reviews
-    ]
+            "ordered_menus": ordered_menus,
+        })
+
+    return reviews
     
 @router.get("/check/{transaction_id}")
 async def check_reviewed(
