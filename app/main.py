@@ -1,16 +1,34 @@
 from datetime import datetime
 from time import time
-
+from sqladmin import Admin
+from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from app.admin.auth import AdminAuth
+from app.admin.views import MenuAdmin, MerchantAdmin, OrderAdmin, ReviewAdmin, UserAdmin
 from app.core.scheluder import start_scheduler
 from app.crud import merchants
 from app.models import menu, merchants, transaction_item, transaction, user, review
 from app.database import AsyncSessionLocal, engine, Base
 from app.routers import auth, dashboard, discovery, menu, merchant_transaction, users, merchants, transaction as transaction_router, review as review_router
+from app.core.config import settings
 
-app = FastAPI()
+app = FastAPI(title="SaveBite Super Ganas API")
+
+app.add_middleware(SessionMiddleware, secret_key=settings.ADMIN_SECRET_KEY)
+admin = Admin(
+    app,
+    engine,
+    title="SaveBite Super Ganas",
+    authentication_backend=AdminAuth(secret_key=settings.ADMIN_SECRET_KEY)
+)
+
+admin.add_view(UserAdmin)
+admin.add_view(MerchantAdmin)
+admin.add_view(MenuAdmin)
+admin.add_view(OrderAdmin)
+admin.add_view(ReviewAdmin)
 
 @app.on_event("startup")
 async def startup():

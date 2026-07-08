@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     MIDTRANS_SERVER_KEY: str
     MIDTRANS_CLIENT_KEY: str
     MIDTRANS_IS_PRODUCTION: bool = False
+    ADMIN_USERNAME: str
+    ADMIN_PASSWORD: str
+    ADMIN_SECRET_KEY: str
     
     class Config:
         env_file = ".env"
