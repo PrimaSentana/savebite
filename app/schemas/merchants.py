@@ -42,6 +42,7 @@ class MerchantResponse(BaseModel):
     is_open: bool
     average_rating: float | None = None
     review_count: int = 0
+    balance: float = 0.0
 
     class Config:
         from_attributes = True

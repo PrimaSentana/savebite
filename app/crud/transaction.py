@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.menu import Menu, MenuStatus
+from app.models.merchants import Merchant
 from app.models.transaction import Order, TransactionStatus
 from app.models.transaction_item import TransactionItem
 from app.schemas.transaction import CheckoutRequest
@@ -140,3 +141,15 @@ async def rollback_stock(db: AsyncSession, order: Order):
                 menu.status = MenuStatus.ON_SALE
     
     await db.commit()
+    
+async def add_to_merchant_balance(db: AsyncSession, order: Order):
+    result = await db.execute(
+        select(Merchant)
+        .where(Merchant.id == order.merchant_id)
+    )
+    merchant = result.scalar_one_or_none()
+    
+    if merchant:
+        merchant.balance += order.total_amount
+        await db.commit()
+        print(f"[Balance] Merchant {merchant.name} balance updated: +{order.total_amount} -> total {merchant.balance}")

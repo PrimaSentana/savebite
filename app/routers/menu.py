@@ -149,9 +149,9 @@ async def update_period(
 ):
     menu = await crud_menu.get_menu_by_id(db, menu_id)
     if not menu:
-        raise HTTPException(status_code=404, detail="Menu tidak ditemukan")
+        raise HTTPException(status_code=404, detail="Menu not found")
     if menu.merchant_id != current_merchant.id:
-        raise HTTPException(status_code=403, detail="Akses ditolak. Anda bukan pemilik menu ini")
+        raise HTTPException(status_code=403, detail="Access denied. You dont own this menu")
     
     menu.available_from = data.available_from
     menu.available_until = data.available_until

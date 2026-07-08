@@ -1,5 +1,5 @@
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Float, Integer, String, Boolean, DateTime, null
+from sqlalchemy import Column, Float, Integer, Numeric, String, Boolean, DateTime, null
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 # from shapely.geometry import Point
@@ -15,6 +15,7 @@ class Merchant(Base):
     password = Column(String, nullable=False)
     phone = Column(String, nullable=False)
     address = Column(String, nullable=True)
+    balance = Column(Numeric(12, 2), default=0, nullable=False)
     logo_url = Column(String, nullable=True)
     banner_url = Column(String, nullable=True)
     location = Column(Geometry(geometry_type='POINT', srid=4326), nullable=False)

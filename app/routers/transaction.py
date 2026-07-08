@@ -220,12 +220,15 @@ async def midtrans_webhook(
     
     new_status = None
     should_rollback = False
+    should_add_balance = False
     
     if transaction_status == "capture":
         if fraud_status == "accept":
             new_status = TransactionStatus.PAID
+            should_add_balance = True
     elif transaction_status == "settlement":
         new_status = TransactionStatus.PAID
+        should_add_balance = True
     elif transaction_status == "pending":
         new_status = TransactionStatus.PENDING
     elif transaction_status in ["deny", "cancel"]:
@@ -247,6 +250,10 @@ async def midtrans_webhook(
             midtrans_transaction_id = midtrans_transaction_id
         )
         print(f"[Webhook] Order {order_id} updated to {new_status}")
+        
+        if should_add_balance:
+            await crud_transaction.add_to_merchant_balance(db, order)
+            f"[Webhook] Balance updated for merchant {order.merchant_id}"
         
         if should_rollback:
             await crud_transaction.rollback_stock(db, order)

@@ -85,7 +85,8 @@ def build_merchant_response(merchant: Merchant) -> dict:
         "latitude": location["latitude"],
         "longitude": location["longitude"],
         "average_rating": merchant.average_rating,
-        "review_count": merchant.review_count
+        "review_count": merchant.review_count,
+        "balance": merchant.balance
     }
     
 async def delete_merchant(db: AsyncSession, merchant: Merchant):
