@@ -37,7 +37,7 @@ async def update_my_username(
 
     return await crud_user.update_username(db, current_user, data.username)
 
-@router.put("/me/email", response_model=ChangeEmail)
+@router.put("/me/email", response_model=UserResponse)
 async def update_email(
     data: ChangeEmail,
     current_user: User = Depends(get_current_user),

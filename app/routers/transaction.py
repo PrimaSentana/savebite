@@ -87,6 +87,11 @@ async def checkout(
         "expiry": {
             "unit": "hour",
             "duration": 1
+        },
+        "callbacks": {
+            "finish": "myapp://payment/finish",
+            "error": "myapp://payment/error",
+            "pending": "myapp://payment/pending",
         }
     }
     
