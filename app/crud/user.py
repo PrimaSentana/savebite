@@ -54,5 +54,11 @@ async def change_user_password(db:AsyncSession, user: User, current_password: st
     return user
 
 async def delete_user(db:AsyncSession, user: User):
-    await db.delete(user)
+    user.is_active = False
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+async def activated_user(db:AsyncSession, user: User):
+    user.is_active = True
     await db.commit()
