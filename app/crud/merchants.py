@@ -90,8 +90,10 @@ def build_merchant_response(merchant: Merchant) -> dict:
     }
     
 async def delete_merchant(db: AsyncSession, merchant: Merchant):
-    await db.delete(merchant) 
+    merchant.is_active = False
     await db.commit()
+    await db.refresh(merchant)
+    return merchant
     
 async def get_nearby_merchants(
     db: AsyncSession,
