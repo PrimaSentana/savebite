@@ -21,7 +21,10 @@ async def get_all_orders(
 ):
     result = await db.execute(
         select(Order)
-        .where(Order.merchant_id == current_merchant.id)
+        .where(
+            Order.merchant_id == current_merchant.id,
+            Order.status.in_([TransactionStatus.PAID, TransactionStatus.PENDING, TransactionStatus.READY_FOR_PICKUP, TransactionStatus.COMPLETED])
+        )
         .options(
             selectinload(Order.items),
             selectinload(Order.user)
