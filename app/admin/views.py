@@ -57,8 +57,8 @@ class MerchantAdmin(ModelView, model=Merchant):
     ]
     # column_filters = [Merchant.is_active]
     
-    form_excluded_columns = [Merchant.password]
-    column_details_exclude_list = [Merchant.password]
+    form_excluded_columns = [Merchant.password, Merchant.location]
+    column_details_exclude_list = [Merchant.password, Merchant.location]
     
     can_create = False
     can_delete = True
