@@ -20,7 +20,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.ADMIN_SECRET_KEY)
 admin = Admin(
     app,
     engine,
-    title="SaveBite Super Ganas",
+    title="SaveBite Admin",
     authentication_backend=AdminAuth(secret_key=settings.ADMIN_SECRET_KEY)
 )
 
