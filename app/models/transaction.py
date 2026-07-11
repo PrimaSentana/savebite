@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric, Enum, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric, Enum, Text, Time
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -25,7 +25,7 @@ class Order(Base):
     total_amount = Column(Numeric(10, 2), nullable=False)
 
     status = Column(Enum(TransactionStatus), nullable=False, default=TransactionStatus.PENDING)
-
+    pickup_time = Column(Time, nullable=True)
     snap_token = Column(String, nullable=True)
     payment_type = Column(String, nullable=True)
     payment_url = Column(String, nullable=True)

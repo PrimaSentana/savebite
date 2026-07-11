@@ -73,6 +73,7 @@ async def create_transaction(
         subtotal = subtotal,
         total_amount = subtotal,
         notes = data.notes,
+        pickup_time = data.pickup_time,
         expired_at = datetime.now(timezone.utc) + timedelta(hours=1)
     )
     db.add(order)

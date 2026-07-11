@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, time, timezone
 import decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.models.transaction import TransactionStatus
 
@@ -13,6 +13,7 @@ class CartItem(BaseModel):
 class CheckoutRequest(BaseModel):
     items: list[CartItem]
     notes: str | None = None
+    pickup_time: time | None = None
 
 class TransactionItemResponse(BaseModel):
     id: int
@@ -40,6 +41,7 @@ class TransactionResponse(BaseModel):
     expired_at: datetime | None = None
     completed_at: datetime | None = None
     created_at: datetime
+    pickup_time: time | None = None
     items: list[TransactionItemResponse] = []
     customer_username: str | None = None
     
@@ -63,6 +65,7 @@ class UserTransactionResponse(BaseModel):
     created_at: datetime
     items: list[TransactionItemResponse] = []
     merchant_name: str | None = None
+    pickup_time: time | None = None
     
     class config:
         from_attributes = True
