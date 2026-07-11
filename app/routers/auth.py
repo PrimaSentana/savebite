@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.security import create_access_token, create_refresh_token, verify_token
+from app.core.security import create_access_token, create_refresh_token, hash_password, verify_token
 from app.crud.merchants import authenticate_merchant, build_merchant_response, create_merchant, get_merchant_by_email
 from app.database import get_db
 from app.models.user import User
 from app.schemas.merchants import MerchantCreate, MerchantLogin, MerchantResponse
-from app.schemas.user import RefreshTokenRequest, TokenResponse, UserLogin, UserResponse, UserCreate
+from app.schemas.user import ForgotPassword, RefreshTokenRequest, TokenResponse, UserLogin, UserResponse, UserCreate
 from app.crud import user as crud_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -116,3 +116,24 @@ async def login_merchant(data: MerchantLogin, db: AsyncSession = Depends(get_db)
         access_token=access_token,
         refresh_token=refresh_token
     )
+
+@router.put("/forgot-password")
+async def forgot_password(
+    data: ForgotPassword,
+    db: AsyncSession = Depends(get_db)
+):
+    user = await crud_user.get_user_by_email(db, data.email)
+    
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="Email belum terdaftar"
+        )
+    
+    user.password = hash_password(data.new_password)
+    await db.commit()
+    await db.refresh(user)
+    
+    return {
+        "message": "Password successfully updated"
+    }
