@@ -9,6 +9,40 @@ from app.models.transaction import Order, TransactionStatus
 
 scheduler = AsyncIOScheduler()
 
+async def activate_menus():
+    async with AsyncSessionLocal() as db:
+        try:
+            from app.models.menu import Menu, MenuStatus
+            now = datetime.now(timezone.utc)
+            
+            result = await db.execute(
+                update(Menu)
+                .where(
+                    Menu.available_from != None,
+                    Menu.available_from <= now,
+                    Menu.available_until > now,
+                    Menu.is_active == False,
+                    Menu.status == MenuStatus.HIDDEN,
+                    Menu.quantity > 0
+                )
+                .values(
+                    is_active=True,
+                    status=MenuStatus.ON_SALE,
+                )
+                .execution_options(synchronize_session=False)
+            )
+            await db.commit()
+            
+            activated_count = result.rowcount
+            if activated_count > 0:
+                print(f"[Scheduler] {activated_count} menu(s) activated at {now}")
+            else:
+                print(f"[Scheduler] No menus to activate at {now}")
+
+        except Exception as e:
+            print(f"[Scheduler] Error activating menus: {e}")
+            await db.rollback()
+
 async def expire_menus():
     async with AsyncSessionLocal() as db:
         try:
@@ -20,7 +54,7 @@ async def expire_menus():
                     Menu.available_until != None,
                     Menu.available_until <= now,
                     Menu.is_active == True,
-                    Menu.status != "sold_out"
+                    Menu.status != MenuStatus.HIDDEN
                 )
                 .values(
                     is_active = False,
@@ -90,5 +124,12 @@ def start_scheduler():
         replace_existing=True
     )
     
+    scheduler.add_job(
+        activate_menus,
+        trigger=IntervalTrigger(minutes=1),
+        id="activate_menus",
+        replace_existing=True
+    )
+    
     scheduler.start()
-    print(f"[Scheduler] Started - checking expired menus and abandoned transaction every 1 minute")
+    print(f"[Scheduler] Started - checking activate, expired menus and abandoned transaction every 1 minute")
