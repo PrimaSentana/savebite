@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.cloudinary import delete_profile_photo, upload_profile_photo
+from app.core.security import hash_password
 from app.database import get_db
 from app.models.transaction import Order, TransactionStatus
 from app.models.user import User
-from app.schemas.user import ChangeEmail, ChangePassword, UpdateUsername, UserResponse
+from app.schemas.user import ChangeEmail, ChangePassword, ForgotPassword, UpdateUsername, UserResponse
 from app.crud import user as crud_user
 from app.core.deps import get_current_user
 
