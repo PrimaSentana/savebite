@@ -11,7 +11,7 @@ from app.models.merchants import Merchant
 from app.models.review import Review
 from app.models.transaction import Order, TransactionStatus
 from app.models.user import User
-from app.schemas.review import MerchantReplyCreate, ReviewCreate, ReviewMenuResponse, ReviewResponse
+from app.schemas.review import EditMerchantReply, MerchantReplyCreate, ReviewCreate, ReviewMenuResponse, ReviewResponse
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
 
@@ -185,4 +185,31 @@ async def reply_to_review(
     review = await add_merchant_reply(db, review, data.reply)
     return {
         "message": "reply successfully"
+    }
+    
+@router.put("/{review_id}/reply")
+async def edit_reply_merchant(
+    review_id: int,
+    data: EditMerchantReply,
+    current_merchant: Merchant = Depends(get_current_merchant),
+    db: AsyncSession = Depends(get_db)
+):
+    review = await get_review_by_id(db, review_id)
+    
+    if not review:
+        raise HTTPException(
+            status_code=404,
+            detail="Ulasan tidak ditemukan"
+        )
+    if review.merchant_id != current_merchant.id:
+        raise HTTPException(
+            status_code=422,
+            detail="Balasan ulasan bukan milik merchant"
+        )
+    
+    review.merchant_reply = data.reply
+    await db.commit()
+    await db.refresh(review)
+    return {
+        "message": "Balasan ulasan berhasil di edit"
     }

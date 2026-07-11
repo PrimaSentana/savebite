@@ -46,3 +46,6 @@ class ReviewResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class EditMerchantReply(BaseModel):
+    reply: str
