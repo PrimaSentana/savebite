@@ -1,5 +1,5 @@
 # app/routers/menu.py
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
 from sqlalchemy import select
@@ -153,10 +153,22 @@ async def update_period(
     if menu.merchant_id != current_merchant.id:
         raise HTTPException(status_code=403, detail="Access denied. You dont own this menu")
     
+    now = datetime.now(timezone.utc)
+    
     menu.available_from = data.available_from
     menu.available_until = data.available_until
     
-    if data.available_until is None and not menu.is_active:
+    if data.available_from and data.available_until:
+        if data.available_from > now:
+            menu.is_active = False
+            menu.status = MenuStatus.HIDDEN
+            print(f"[Menu] Menu {menu_id} scheduled to activate at {data.available_from}")
+        elif data.available_from <= now and data.available_until > now:
+            menu.is_active = True
+            menu.status = MenuStatus.ON_SALE
+            print(f"[Menu] Menu {menu_id} activated immediately")
+    
+    elif data.available_until is None and data.available_from is None:
         menu.is_active = True
         menu.status = MenuStatus.ON_SALE
     
