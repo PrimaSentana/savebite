@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import hashlib
 import json
 from typing import List
@@ -54,6 +55,26 @@ async def checkout(
                 status_code=400,
                 detail=f"'{menu.title}' hanya tersisa {menu.quantity}"
             )
+            
+    now = datetime.now()
+    
+    pickup_datetime = datetime(
+        now.year, now.month, now.day,
+        data.pickup_time.hour, data.pickup_time.minute, 0
+    )
+    min_pickup = now + timedelta(hours=2)
+    
+    if pickup_datetime <= now:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Jam pengambilan tidak valid."
+        )
+    
+    if pickup_datetime > min_pickup:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Jam pengambilan tidak boleh lebih dari {min_pickup.strftime("%I:%M %p")}"
+        )
         
     order = await crud_transaction.create_transaction(db, current_user.id, data, menus)
     

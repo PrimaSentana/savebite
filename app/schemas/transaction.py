@@ -69,3 +69,7 @@ class UserTransactionResponse(BaseModel):
     
     class config:
         from_attributes = True
+        
+class TimeTest(BaseModel):
+    pickup_time: time | None = None
+    
