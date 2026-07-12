@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from time import time
 from sqladmin import Admin
 from starlette.middleware.sessions import SessionMiddleware
@@ -13,6 +13,7 @@ from app.models import menu, merchants, transaction_item, transaction, user, rev
 from app.database import AsyncSessionLocal, engine, Base
 from app.routers import auth, dashboard, discovery, menu, merchant_transaction, users, merchants, transaction as transaction_router, review as review_router
 from app.core.config import settings
+from app.schemas.transaction import TimeTest
 
 app = FastAPI(title="SaveBite Super Ganas API")
 
@@ -78,8 +79,33 @@ app.include_router(transaction_router.router)
 app.include_router(review_router.router)
 
 
-@app.get('/')
-def test():
+@app.post('/time/time-pickup-test')
+def test_time_pickup(
+    data: TimeTest
+):
+    now = datetime.now()
+    
+    pickup_datetime = datetime(
+        now.year, now.month, now.day,
+        data.pickup_time.hour, data.pickup_time.minute, 0
+    )
+    min_pickup = now + timedelta(hours=2)
+    
+    if pickup_datetime <= now:
+        return {
+            "message": f"Pickup time must be at least 2 hours from now. "
+        }
+    
+    if pickup_datetime > min_pickup:
+        return {
+            "message": "invalid",
+            "now": now,
+            "pickup_datetime": pickup_datetime,
+            "min_pickup": min_pickup
+        }
     return {
-        "messsage": "Server started bitch!"
+        "message": "valid",
+        "now": now,
+        "pickup_datetime": pickup_datetime,
+        "min_pickup": min_pickup
     }
